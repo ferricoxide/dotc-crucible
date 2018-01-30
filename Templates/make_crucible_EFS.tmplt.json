@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This template sets up the EFS filesystems used by Crucible for persistent storage",
+  "Outputs": {
+    "EfsEndpoint": {
+      "Description": "FQDN for Crucible EFS endpoint.",
+      "Value": {
+        "Fn::Join": [
+          ".",
+          [
+            { "Ref": "CrucibleEFS" },
+            "efs",
+            { "Ref": "AWS::Region" },
+            { "Ref": "ServiceTld" }
+          ]
+        ]
+      }
+    },
+    "EfsId": {
+      "Description": "Crucible EFS filesystem-ID.",
+      "Value": {
+        "Ref": "CrucibleEFS"
+      }
+    },
+    "EfsMntId1": {
+      "Description": "Crucible EFS mount-target ID.",
+      "Value": {
+        "Ref": "CrucibleEFSMount1"
+      }
+    },
+    "EfsMntId2": {
+      "Description": "Crucible EFS mount-target ID.",
+      "Value": {
+        "Ref": "CrucibleEFSMount2"
+      }
+    },
+    "EfsMntId3": {
+      "Description": "Crucible EFS mount-target ID.",
+      "Value": {
+        "Ref": "CrucibleEFSMount3"
+      }
+    }
+  },
+  "Parameters": {
+    "EfsSg": {
+      "Description": "List of security groups to apply to the EFS shares.",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+    "EfsSubnet": {
+      "Description": "Select three subnets - each from different Availability Zones.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "ServiceTld": {
+      "Default": "amazonaws.com",
+      "Description": "TLD of the created EFS-endpoint.",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "CrucibleEFS": {
+      "Properties": {
+        "FileSystemTags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "-Crucible_EFS"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::EFS::FileSystem"
+    },
+    "CrucibleEFSMount1": {
+      "Properties": {
+        "FileSystemId": {
+          "Ref": "CrucibleEFS"
+        },
+        "SecurityGroups": {
+          "Ref": "EfsSg"
+        },
+        "SubnetId": {
+          "Fn::Select": [
+            "0",
+            {
+              "Ref": "EfsSubnet"
+            }
+          ]
+        }
+      },
+      "Type": "AWS::EFS::MountTarget"
+    },
+    "CrucibleEFSMount2": {
+      "Properties": {
+        "FileSystemId": {
+          "Ref": "CrucibleEFS"
+        },
+        "SecurityGroups": {
+          "Ref": "EfsSg"
+        },
+        "SubnetId": {
+          "Fn::Select": [
+            "1",
+            {
+              "Ref": "EfsSubnet"
+            }
+          ]
+        }
+      },
+      "Type": "AWS::EFS::MountTarget"
+    },
+    "CrucibleEFSMount3": {
+      "Properties": {
+        "FileSystemId": {
+          "Ref": "CrucibleEFS"
+        },
+        "SecurityGroups": {
+          "Ref": "EfsSg"
+        },
+        "SubnetId": {
+          "Fn::Select": [
+            "2",
+            {
+              "Ref": "EfsSubnet"
+            }
+          ]
+        }
+      },
+      "Type": "AWS::EFS::MountTarget"
+    }
+  }
+}
